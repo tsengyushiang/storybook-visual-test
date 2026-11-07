@@ -9,6 +9,9 @@ jobs:
   visual-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write   # needed to comment on the PR
     container:
       image: mcr.microsoft.com/playwright:v1.65.0-noble   # must match @playwright/test in package.json
     steps:
@@ -26,6 +29,7 @@ jobs:
           HOME: /root   # Playwright in containers can need this
 
       - uses: actions/upload-artifact@v4
+        id: upload      # needed so we can reference its outputs below
         if: always()    # keep the report even when tests fail
         with:
           name: playwright-results
@@ -33,3 +37,17 @@ jobs:
           path: |
             playwright-report/
             test-results/
+
+      - name: Comment on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Visual test report: ${process.env.ARTIFACT_URL}`,
+            });
