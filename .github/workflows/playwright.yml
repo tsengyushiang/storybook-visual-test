@@ -1,0 +1,30 @@
+# .gitlab-ci.yml
+image: mcr.microsoft.com/playwright:v1.65.0-noble   # must match @playwright/test in package.json
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
+
+stages:
+  - test
+
+visual-tests:
+  stage: test
+  timeout: 60 minutes
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run build-storybook
+    - npm run test:visual
+  artifacts:
+    when: always            # keep the report even when tests fail (that's when you need it)
+    expire_in: 1 days
+    paths:
+      - playwright-report/
+      - test-results/       # contains expected / actual / diff images
