@@ -21,7 +21,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build-storybook
-      - run: npm run test:visual
+      - run: npm run test
         env:
           HOME: /root   # Playwright in containers can need this
 
