@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import { fn } from 'storybook/test';
+import { fn, userEvent, within } from 'storybook/test';
 
 import Button from './Button.vue';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
+const onClick = fn()
 const meta = {
   title: 'Example/Button',
   component: Button,
@@ -17,7 +18,7 @@ const meta = {
   args: {
     primary: false,
     // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#story-args
-    onClick: fn(),
+    onClick,
   },
 } satisfies Meta<typeof Button>;
 
@@ -29,6 +30,11 @@ export const Primary: Story = {
     primary: true,
     label: 'Button',
   },
+
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body);
+    await userEvent.click(await canvas.findByRole('button', { name: 'Button' }));
+  }
 };
 
 export const Secondary: Story = {
